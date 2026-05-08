@@ -126,7 +126,7 @@ pipeline {
                             source .env
 
                             echo "Building Maven Project..."
-                            mvn clean deploy -DskipTests
+                            /opt/apache-maven-3.5.2/bin/mvn clean install -DskipTests
                         '
                     """
                 }
