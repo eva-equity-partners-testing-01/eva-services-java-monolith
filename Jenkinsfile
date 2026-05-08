@@ -150,7 +150,7 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ${QA_USER}@${QA_HOST} '
                             set -e
 
-                            cd ${QA_PROJECT_DIR}/target
+                            cd ${QA_PROJECT_DIR}/
                             source .env
 
                             echo "Building Maven Project..."
@@ -160,6 +160,8 @@ pipeline {
                             pm2 delete ${PM2_APP_NAME} || true
 
                             echo "Starting Spring Boot Application with PM2..."
+
+                            cd ${QA_PROJECT_DIR}/target
 
                             pm2 start "java -jar spring-boot-jpa-postgresql-0.0.1-SNAPSHOT.jar" \\
                                 --name ${PM2_APP_NAME}
