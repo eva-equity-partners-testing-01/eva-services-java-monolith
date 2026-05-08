@@ -151,6 +151,10 @@ pipeline {
                             set -e
 
                             cd ${QA_PROJECT_DIR}/target
+                            source .env
+
+                            echo "Building Maven Project..."
+                            /opt/apache-maven-3.5.2/bin/mvn clean install -DskipTests
 
                             echo "Stopping Existing PM2 Process..."
                             pm2 delete ${PM2_APP_NAME} || true
