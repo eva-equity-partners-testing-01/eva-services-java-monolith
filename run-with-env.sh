@@ -9,5 +9,3 @@ fi
 set -a
 source ./.env
 set +a
-
-mvn spring-boot:run
