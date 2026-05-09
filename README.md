@@ -11,7 +11,7 @@ Front-end that works well with this Back-end
 > [React](https://www.bezkoder.com/react-crud-web-api/) / [React Redux Client](https://www.bezkoder.com/react-redux-crud-example/)
 
 More practice:
-> [Spring Boot Validate Request Body](https://www.bezkoder.com/spring-boot-validate-request-body/)
+> [Spring Boot Validate Request Body](https://www.bezkoder.com/spring-boot-validate-request-body/) 
 
 > [Spring Boot File upload example with Multipart File](https://www.bezkoder.com/spring-boot-file-upload/)
 
