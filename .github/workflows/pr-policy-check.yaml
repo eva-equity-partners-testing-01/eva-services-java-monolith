@@ -13,29 +13,36 @@ jobs:
         run: |
           BRANCH="${{ github.head_ref }}"
 
-          # Allowed formats aligned with Redmine extraction
-          VALID_BRANCH="^(feature|bugfix|issue)/[0-9]+-[a-zA-Z0-9._-]+$"
+          # Feature / Bug / Issue branches
+          VALID_FEATURE="^(features|bugs|issues)/[0-9]+(-[a-zA-Z0-9._-]+)*$"
+
+          # Release / Hotfix branches (semver + optional suffix)
+          VALID_SEMVER="^(release|hotfix)/[0-9]+(\.[0-9]+){1,2}(-[a-zA-Z0-9._-]+)*$"
 
           echo "Checking branch: $BRANCH"
 
-          if [[ "$BRANCH" =~ $VALID_BRANCH ]]; then
+          if [[ "$BRANCH" =~ $VALID_FEATURE ]] || [[ "$BRANCH" =~ $VALID_SEMVER ]]; then
             echo "Branch name is valid: $BRANCH"
           else
             echo "Invalid branch name: $BRANCH"
             echo ""
             echo "Allowed formats:"
-            echo "  feature/<id>-<name>"
-            echo "  bugfix/<id>-<name>"
-            echo "  issue/<id>-<name>"
+            echo "  features/<id>-<name>"
+            echo "  bugs/<id>-<name>"
+            echo "  issues/<id>-<name>"
+            echo "  release/<version>-<name>"
+            echo "  hotfix/<version>-<name>"
             echo ""
             echo "Examples:"
-            echo "  feature/123-login-fix"
-            echo "  bugfix/456-api-error"
-            echo "  issue/789-ui-alignment"
+            echo "  features/123-login-fix"
+            echo "  bugs/456-api-error"
+            echo "  issues/789-ui-alignment"
+            echo "  release/1.0.0-initial"
+            echo "  hotfix/1.0.1-critical-fix"
             exit 1
           fi
 
-      - name: Validate PR title (optional)
+      - name: Validate PR title (optional but recommended)
         run: |
           TITLE="${{ github.event.pull_request.title }}"
 
