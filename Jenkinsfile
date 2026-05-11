@@ -7,7 +7,6 @@ pipeline {
 
         // Updated Project Path
         QA_PROJECT_DIR = '/home/ubuntu/QA/api/eva-services-java-monolith'
-
         SSH_CRED_ID    = 'qa-server-ssh-key'
 
         // PM2 App Name
