@@ -8,7 +8,7 @@ pipeline {
         QA_PROJECT_DIR = '/home/ubuntu/QA/api/eva-services-java-monolith'
         SSH_CRED_ID    = 'qa-server-ssh-key'
 
-        PM2_APP_NAME   = 'qa-environment'
+        PM2_APP_NAME   = 'dev-environment'
 
         PORT           = '8080'
 
@@ -66,19 +66,21 @@ pipeline {
                         env.PR_URL = env.CHANGE_URL
                     } else if (prNum && prNum != '' && prNum != 'null') {
                         env.PR_URL = "${env.REPO_URL}/pull/${prNum}"
-                    } else if (env.COMMIT_HASH && env.COMMIT_HASH != 'null') {
-                        env.PR_URL = "${env.REPO_URL}/commit/${env.COMMIT_HASH}"
                     } else {
                         env.PR_URL = "${env.REPO_URL}/tree/${env.BRANCH_NAME}"
                     }
 
+                    // Use actual branch name not PR-25 for checkout
+                    env.ACTUAL_BRANCH = env.CHANGE_BRANCH ?: env.BRANCH_NAME
+
                     echo "=============================================="
-                    echo "COMMITTED_BY : ${env.COMMITTED_BY}"
-                    echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
-                    echo "COMMIT_MSG   : ${env.COMMIT_MSG}"
-                    echo "PR_NUMBER    : ${env.PR_NUMBER}"
-                    echo "COMMIT_HASH  : ${env.COMMIT_HASH}"
-                    echo "PR_URL       : ${env.PR_URL}"
+                    echo "COMMITTED_BY  : ${env.COMMITTED_BY}"
+                    echo "SOURCE_BRANCH : ${env.SOURCE_BRANCH}"
+                    echo "ACTUAL_BRANCH : ${env.ACTUAL_BRANCH}"
+                    echo "COMMIT_MSG    : ${env.COMMIT_MSG}"
+                    echo "PR_NUMBER     : ${env.PR_NUMBER}"
+                    echo "COMMIT_HASH   : ${env.COMMIT_HASH}"
+                    echo "PR_URL        : ${env.PR_URL}"
                     echo "=============================================="
                 }
             }
