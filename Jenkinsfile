@@ -47,22 +47,20 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    // Use CHANGE_ID for PR builds, otherwise extract from commit
-                    if (env.CHANGE_ID) {
-                        env.PR_NUMBER = env.CHANGE_ID
-                    } else {
-                        env.PR_NUMBER = sh(
-                            script: 'git log --merges --pretty=format:"%s" -10 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""',
-                            returnStdout: true
-                        ).trim()
-                    }
+                    env.PR_NUMBER = sh(
+                        script: '''
+                            git log -1 --pretty=format:"%s" | grep -oP "(?:Merge pull request #|\\(#)\\K\\d+" | head -1 || \
+                            git log --merges --pretty=format:"%s" -10 | grep -oP "Merge pull request #\\K\\d+" | head -1 || \
+                            echo ""
+                        ''',
+                        returnStdout: true
+                    ).trim()
 
                     env.COMMIT_HASH = sh(
                         script: 'git log -1 --pretty=format:"%H"',
                         returnStdout: true
                     ).trim()
 
-                    // Build correct PR URL
                     def prNum = env.PR_NUMBER?.trim()
                     if (env.CHANGE_URL) {
                         env.PR_URL = env.CHANGE_URL
@@ -125,8 +123,8 @@ pipeline {
                             cd ${QA_PROJECT_DIR}
                             git stash || true
                             git fetch --all
-                            git checkout ${env.ACTUAL_BRANCH}
-                            git pull origin ${env.ACTUAL_BRANCH}
+                            git checkout ${env.BRANCH_NAME}
+                            git pull origin ${env.BRANCH_NAME}
                         '
                     """
                 }
