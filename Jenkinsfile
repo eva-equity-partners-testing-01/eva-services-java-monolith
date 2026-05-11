@@ -162,7 +162,7 @@ pipeline {
 
                             cd ${QA_PROJECT_DIR}/target
 
-                            pm2 start "java -jar spring-boot-jpa-postgresql-0.0.1-SNAPSHOT.jar" \\
+                            pm2 start "java -jar eva-services-java-monolith-0.0.1-SNAPSHOT.jar" \\
                                 --name ${PM2_APP_NAME}
 
                             echo "Saving PM2 Process List..."
