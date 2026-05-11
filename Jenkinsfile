@@ -48,15 +48,9 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    // Only check latest commit for PR number
+                    // Check last 5 commits for nearest PR number
                     env.PR_NUMBER = sh(
-                        script: 'git log -1 --pretty=format:"%s" | grep -oP "Merge pull request #\\K\\d+" || echo ""',
-                        returnStdout: true
-                    ).trim()
-
-                    // Get commit hash as fallback for direct pushes
-                    env.COMMIT_HASH = sh(
-                        script: 'git log -1 --pretty=format:"%H"',
+                        script: 'git log --pretty=format:"%s" -5 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""',
                         returnStdout: true
                     ).trim()
 
@@ -71,7 +65,6 @@ pipeline {
                     echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
                     echo "COMMIT_MSG   : ${env.COMMIT_MSG}"
                     echo "PR_NUMBER    : ${env.PR_NUMBER}"
-                    echo "COMMIT_HASH  : ${env.COMMIT_HASH}"
                     echo "PR_URL       : ${env.PR_URL}"
                     echo "=============================================="
                 }
