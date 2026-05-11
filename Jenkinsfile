@@ -12,7 +12,6 @@ pipeline {
 
         PORT           = '8080'
 
-        // Corrected Repo URL
         REPO_URL       = 'https://github.com/eva-equity-partners-testing-01/eva-services-java-monolith'
 
         TEAMS_URL      = 'https://defaulte3ce5830f7d140c0ab827ce4f99738.f0.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5c488acdd9b94415a86cd66bd3f10c87/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PyZaC5FoW98hJSDKFlCsOavaLkDMeWA8EED2GXQvfo'
@@ -48,17 +47,14 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    // Check last 5 commits for nearest PR number
+                    // Search only merge commits in last 10 for PR number
                     env.PR_NUMBER = sh(
-                        script: 'git log --pretty=format:"%s" -5 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""',
+                        script: 'git log --merges --pretty=format:"%s" -10 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""',
                         returnStdout: true
                     ).trim()
 
-                    // Build correct PR URL:
-                    // 1. Use CHANGE_URL if available (Jenkins PR build)
-                    // 2. Use /pull/{number} if PR number found in latest commit
-                    // 3. Fallback to /commit/{hash} for direct pushes
-                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${env.REPO_URL}/pull/${env.PR_NUMBER}" : "${env.REPO_URL}/commit/${env.COMMIT_HASH}")
+                    // Build correct PR URL with null safety check
+                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER?.trim() && env.PR_NUMBER != 'null' ? "${env.REPO_URL}/pull/${env.PR_NUMBER}" : "${env.REPO_URL}/tree/${env.BRANCH_NAME}")
 
                     echo "=============================================="
                     echo "COMMITTED_BY : ${env.COMMITTED_BY}"
