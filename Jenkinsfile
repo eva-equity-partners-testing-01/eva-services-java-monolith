@@ -12,7 +12,8 @@ pipeline {
 
         PORT           = '8080'
 
-        REPO_URL       = 'https://github.com/eva-equity-partners-testing-01/eva-saas-core-service.git'
+        // Corrected Repo URL
+        REPO_URL       = 'https://github.com/eva-equity-partners-testing-01/eva-services-java-monolith'
 
         TEAMS_URL      = 'https://defaulte3ce5830f7d140c0ab827ce4f99738.f0.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5c488acdd9b94415a86cd66bd3f10c87/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PyZaC5FoW98hJSDKFlCsOavaLkDMeWA8EED2GXQvfo'
     }
@@ -63,8 +64,7 @@ pipeline {
                     // 1. Use CHANGE_URL if available (Jenkins PR build)
                     // 2. Use /pull/{number} if PR number found in latest commit
                     // 3. Fallback to /commit/{hash} for direct pushes
-                    def repoBase = env.REPO_URL.replace('.git', '')
-                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${repoBase}/pull/${env.PR_NUMBER}" : "${repoBase}/commit/${env.COMMIT_HASH}")
+                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${env.REPO_URL}/pull/${env.PR_NUMBER}" : "${env.REPO_URL}/commit/${env.COMMIT_HASH}")
 
                     echo "=============================================="
                     echo "COMMITTED_BY : ${env.COMMITTED_BY}"
