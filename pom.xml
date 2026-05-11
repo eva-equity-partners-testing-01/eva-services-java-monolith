@@ -49,7 +49,7 @@
         </dependency>
 
     </dependencies>
-
+ 
     <distributionManagement>
         <repository>
             <id>eva-services-java-monolith</id>
