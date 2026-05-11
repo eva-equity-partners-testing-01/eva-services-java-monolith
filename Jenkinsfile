@@ -98,7 +98,6 @@ pipeline {
             }
 
             steps {
-
                 echo "DEPLOYMENT STARTED"
                 echo "COMMITTED BY : ${env.COMMITTED_BY}"
 
