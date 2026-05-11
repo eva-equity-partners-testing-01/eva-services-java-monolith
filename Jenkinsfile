@@ -47,23 +47,42 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    // Check last 5 commits for nearest PR number
+                    // Handle both merge formats:
+                    // 1. Standard merge: "Merge pull request #21 from branch"
+                    // 2. Squash merge:   "Features/173 login dev (#21)"
                     env.PR_NUMBER = sh(
-                        script: 'git log --pretty=format:"%s" -5 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""',
+                        script: '''
+                            git log -1 --pretty=format:"%s" | grep -oP "(?:Merge pull request #|\\(#)\\K\\d+" | head -1 || \
+                            git log --merges --pretty=format:"%s" -10 | grep -oP "Merge pull request #\\K\\d+" | head -1 || \
+                            echo ""
+                        ''',
                         returnStdout: true
                     ).trim()
 
-                    // Build correct PR URL:
-                    // 1. Use CHANGE_URL if available (Jenkins PR build)
-                    // 2. Use /pull/{number} if PR number found in latest commit
-                    // 3. Fallback to /commit/{hash} for direct pushes
-                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${env.REPO_URL}/pull/${env.PR_NUMBER}" : "${env.REPO_URL}/commit/${env.COMMIT_HASH}")
+                    // Get commit hash as fallback
+                    env.COMMIT_HASH = sh(
+                        script: 'git log -1 --pretty=format:"%H"',
+                        returnStdout: true
+                    ).trim()
+
+                    // Build PR URL - fully null safe with explicit if/else
+                    def prNum = env.PR_NUMBER?.trim()
+                    if (env.CHANGE_URL) {
+                        env.PR_URL = env.CHANGE_URL
+                    } else if (prNum && prNum != '' && prNum != 'null') {
+                        env.PR_URL = "${env.REPO_URL}/pull/${prNum}"
+                    } else if (env.COMMIT_HASH && env.COMMIT_HASH != 'null') {
+                        env.PR_URL = "${env.REPO_URL}/commit/${env.COMMIT_HASH}"
+                    } else {
+                        env.PR_URL = "${env.REPO_URL}/tree/${env.BRANCH_NAME}"
+                    }
 
                     echo "=============================================="
                     echo "COMMITTED_BY : ${env.COMMITTED_BY}"
                     echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
                     echo "COMMIT_MSG   : ${env.COMMIT_MSG}"
                     echo "PR_NUMBER    : ${env.PR_NUMBER}"
+                    echo "COMMIT_HASH  : ${env.COMMIT_HASH}"
                     echo "PR_URL       : ${env.PR_URL}"
                     echo "=============================================="
                 }
@@ -102,14 +121,14 @@ pipeline {
         stage('Git Checkout & Pull') {
             steps {
                 sshagent(credentials: [SSH_CRED_ID]) {
-
                     sh """
                         ssh -o StrictHostKeyChecking=no ${QA_USER}@${QA_HOST} '
                             set -e
-
                             cd ${QA_PROJECT_DIR}
-
-                            echo "Git commands"
+                            git stash || true
+                            git fetch --all
+                            git checkout dev
+                            git pull origin dev
                         '
                     """
                 }
@@ -118,18 +137,15 @@ pipeline {
 
         stage('Build Maven Project') {
             steps {
-
                 sshagent(credentials: [SSH_CRED_ID]) {
-
                     sh """
                         ssh -o StrictHostKeyChecking=no ${QA_USER}@${QA_HOST} '
                             set -e
-
                             cd ${QA_PROJECT_DIR}
-
                             echo "Loading Environment Variables..."
-
+                            source .env
                             echo "Building Maven Project..."
+                            /opt/apache-maven-3.5.2/bin/mvn clean install -DskipTests
                         '
                     """
                 }
@@ -137,7 +153,6 @@ pipeline {
         }
 
         stage('Deploy with PM2') {
-
             when {
                 allOf {
                     not { changeRequest() }
@@ -146,22 +161,24 @@ pipeline {
             }
 
             steps {
-
                 sshagent(credentials: [SSH_CRED_ID]) {
-
                     sh """
                         ssh -o StrictHostKeyChecking=no ${QA_USER}@${QA_HOST} '
                             set -e
-
                             cd ${QA_PROJECT_DIR}/
-
+                            source .env
                             echo "Building Maven Project..."
-
+                            /opt/apache-maven-3.5.2/bin/mvn clean install -DskipTests
                             echo "Stopping Existing PM2 Process..."
-
+                            pm2 delete ${PM2_APP_NAME} || true
                             echo "Starting Spring Boot Application with PM2..."
+                            cd ${QA_PROJECT_DIR}/target
+                            pm2 start "java -jar spring-boot-jpa-postgresql-0.0.1-SNAPSHOT.jar" \\
+                                --name ${PM2_APP_NAME}
                             echo "Saving PM2 Process List..."
+                            pm2 save
                             echo "PM2 Process Status..."
+                            pm2 list
                         '
                     """
                 }
@@ -172,11 +189,8 @@ pipeline {
     post {
 
         success {
-
             script {
-
                 if (env.BRANCH_NAME == 'dev' && !env.CHANGE_ID) {
-
                     sh """
                         curl -s -X POST "${TEAMS_URL}" \\
                         -H "Content-Type: application/json" \\
@@ -193,16 +207,12 @@ pipeline {
                     """
                 }
             }
-
             echo "PIPELINE SUCCESS"
         }
 
         failure {
-
             script {
-
                 if (env.BRANCH_NAME == 'dev' && !env.CHANGE_ID) {
-
                     sh """
                         curl -s -X POST "${TEAMS_URL}" \\
                         -H "Content-Type: application/json" \\
@@ -219,7 +229,6 @@ pipeline {
                     """
                 }
             }
-
             echo "PIPELINE FAILED"
         }
     }

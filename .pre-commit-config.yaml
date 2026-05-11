@@ -9,39 +9,33 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
 
-  # Google Java Format (replaces black)
-  - repo: https://github.com/pre-commit/mirrors-google-java-format
-    rev: v1.19.2
-    hooks:
-      - id: google-java-format
-        args: ["--aosp"]         
-
-  # Checkstyle (replaces flake8)
+  # All Java checks via Maven (no external downloads)
   - repo: local
     hooks:
+      - id: spotless
+        name: Spotless (Google Java Format + imports)
+        language: system
+        entry: ./mvnw spotless:check        # uses project's mvnw wrapper
+        pass_filenames: false
+        files: \.java$
+
       - id: checkstyle
         name: Checkstyle
         language: system
-        entry: mvn checkstyle:check
+        entry: ./mvnw checkstyle:check
         pass_filenames: false
         files: \.java$
 
-  # PMD – static analysis
-  - repo: local
-    hooks:
       - id: pmd
         name: PMD Static Analysis
         language: system
-        entry: mvn pmd:check
+        entry: ./mvnw pmd:check
         pass_filenames: false
         files: \.java$
 
-  # Maven build + test gate
-  - repo: local
-    hooks:
       - id: maven-test
         name: Maven Test
         language: system
-        entry: mvn test -q
+        entry: ./mvnw test -q
         pass_filenames: false
         files: \.java$
