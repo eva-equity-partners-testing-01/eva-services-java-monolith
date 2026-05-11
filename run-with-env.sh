@@ -10,4 +10,4 @@ set -a
 source ./.env
 set +a
 
-mvn spring-boot:run
+mvn spring-boot:run 
