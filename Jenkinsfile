@@ -5,17 +5,13 @@ pipeline {
         QA_HOST        = '98.94.68.254'
         QA_USER        = 'ubuntu'
 
-        // Updated Project Path
         QA_PROJECT_DIR = '/home/ubuntu/QA/api/eva-services-java-monolith'
-
         SSH_CRED_ID    = 'qa-server-ssh-key'
 
-        // PM2 App Name
         PM2_APP_NAME   = 'qa-environment'
 
         PORT           = '8080'
 
-        // Updated Repo URL
         REPO_URL       = 'https://github.com/eva-equity-partners-testing-01/eva-saas-core-service.git'
 
         TEAMS_URL      = 'https://defaulte3ce5830f7d140c0ab827ce4f99738.f0.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5c488acdd9b94415a86cd66bd3f10c87/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PyZaC5FoW98hJSDKFlCsOavaLkDMeWA8EED2GXQvfo'
@@ -51,12 +47,22 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    env.PR_URL = env.CHANGE_URL ?: "${env.REPO_URL}/tree/${env.BRANCH_NAME}"
+                    // Extract PR number from merge commit message
+                    env.PR_NUMBER = sh(
+                        script: 'git log -1 --pretty=format:"%s" | grep -oP "Merge pull request #\\K\\d+" || echo ""',
+                        returnStdout: true
+                    ).trim()
+
+                    // Build correct PR URL without .git and with /pull/{number}
+                    def repoBase = env.REPO_URL.replace('.git', '')
+                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${repoBase}/pull/${env.PR_NUMBER}" : "${repoBase}/tree/${env.BRANCH_NAME}")
 
                     echo "=============================================="
                     echo "COMMITTED_BY : ${env.COMMITTED_BY}"
                     echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
                     echo "COMMIT_MSG   : ${env.COMMIT_MSG}"
+                    echo "PR_NUMBER    : ${env.PR_NUMBER}"
+                    echo "PR_URL       : ${env.PR_URL}"
                     echo "=============================================="
                 }
             }
