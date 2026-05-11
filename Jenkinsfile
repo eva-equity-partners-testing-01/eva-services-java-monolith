@@ -47,21 +47,33 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    // Extract PR number from merge commit message
+                    // Extract PR number from last 20 commits
                     env.PR_NUMBER = sh(
-                        script: 'git log -1 --pretty=format:"%s" | grep -oP "Merge pull request #\\K\\d+" || echo ""',
+                        script: '''
+                            git log --pretty=format:"%s" -20 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""
+                        ''',
                         returnStdout: true
                     ).trim()
 
-                    // Build correct PR URL without .git and with /pull/{number}
+                    // Get commit hash as fallback
+                    env.COMMIT_HASH = sh(
+                        script: 'git log -1 --pretty=format:"%H"',
+                        returnStdout: true
+                    ).trim()
+
+                    // Build correct PR URL:
+                    // 1. Use CHANGE_URL if available (Jenkins PR build)
+                    // 2. Use /pull/{number} if PR number found in git log
+                    // 3. Fallback to /commit/{hash} for direct pushes
                     def repoBase = env.REPO_URL.replace('.git', '')
-                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${repoBase}/pull/${env.PR_NUMBER}" : "${repoBase}/tree/${env.BRANCH_NAME}")
+                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${repoBase}/pull/${env.PR_NUMBER}" : "${repoBase}/commit/${env.COMMIT_HASH}")
 
                     echo "=============================================="
                     echo "COMMITTED_BY : ${env.COMMITTED_BY}"
                     echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
                     echo "COMMIT_MSG   : ${env.COMMIT_MSG}"
                     echo "PR_NUMBER    : ${env.PR_NUMBER}"
+                    echo "COMMIT_HASH  : ${env.COMMIT_HASH}"
                     echo "PR_URL       : ${env.PR_URL}"
                     echo "=============================================="
                 }
