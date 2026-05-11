@@ -47,6 +47,9 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
+                    // Handle both merge formats:
+                    // 1. Standard merge: "Merge pull request #21 from branch"
+                    // 2. Squash merge:   "Features/173 login dev (#21)"
                     env.PR_NUMBER = sh(
                         script: '''
                             git log -1 --pretty=format:"%s" | grep -oP "(?:Merge pull request #|\\(#)\\K\\d+" | head -1 || \
@@ -56,11 +59,13 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
+                    // Get commit hash as fallback
                     env.COMMIT_HASH = sh(
                         script: 'git log -1 --pretty=format:"%H"',
                         returnStdout: true
                     ).trim()
 
+                    // Build PR URL - fully null safe with explicit if/else
                     def prNum = env.PR_NUMBER?.trim()
                     if (env.CHANGE_URL) {
                         env.PR_URL = env.CHANGE_URL
@@ -138,8 +143,6 @@ pipeline {
                             cd ${QA_PROJECT_DIR}
                             echo "Loading Environment Variables..."
                             source .env
-                            echo "Fixing Spotless formatting violations..."
-                            /opt/apache-maven-3.5.2/bin/mvn spotless:apply
                             echo "Building Maven Project..."
                             /opt/apache-maven-3.5.2/bin/mvn clean install -DskipTests
                         '
@@ -163,8 +166,6 @@ pipeline {
                             set -e
                             cd ${QA_PROJECT_DIR}/
                             source .env
-                            echo "Fixing Spotless formatting violations..."
-                            /opt/apache-maven-3.5.2/bin/mvn spotless:apply
                             echo "Building Maven Project..."
                             /opt/apache-maven-3.5.2/bin/mvn clean install -DskipTests
                             echo "Stopping Existing PM2 Process..."
