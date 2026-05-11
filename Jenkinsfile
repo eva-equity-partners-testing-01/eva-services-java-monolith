@@ -8,7 +8,7 @@ pipeline {
         QA_PROJECT_DIR = '/home/ubuntu/QA/api/eva-services-java-monolith'
         SSH_CRED_ID    = 'qa-server-ssh-key'
 
-        PM2_APP_NAME   = 'qa-environment'
+        PM2_APP_NAME   = 'dev-environment'
 
         PORT           = '8080'
 
@@ -47,38 +47,42 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    env.PR_NUMBER = sh(
-                        script: '''
-                            git log -1 --pretty=format:"%s" | grep -oP "(?:Merge pull request #|\\(#)\\K\\d+" | head -1 || \
-                            git log --merges --pretty=format:"%s" -10 | grep -oP "Merge pull request #\\K\\d+" | head -1 || \
-                            echo ""
-                        ''',
-                        returnStdout: true
-                    ).trim()
+                    // Use CHANGE_ID for PR builds, otherwise extract from commit
+                    if (env.CHANGE_ID) {
+                        env.PR_NUMBER = env.CHANGE_ID
+                    } else {
+                        env.PR_NUMBER = sh(
+                            script: 'git log --merges --pretty=format:"%s" -10 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""',
+                            returnStdout: true
+                        ).trim()
+                    }
 
                     env.COMMIT_HASH = sh(
                         script: 'git log -1 --pretty=format:"%H"',
                         returnStdout: true
                     ).trim()
 
+                    // Build correct PR URL
                     def prNum = env.PR_NUMBER?.trim()
                     if (env.CHANGE_URL) {
                         env.PR_URL = env.CHANGE_URL
                     } else if (prNum && prNum != '' && prNum != 'null') {
                         env.PR_URL = "${env.REPO_URL}/pull/${prNum}"
-                    } else if (env.COMMIT_HASH && env.COMMIT_HASH != 'null') {
-                        env.PR_URL = "${env.REPO_URL}/commit/${env.COMMIT_HASH}"
                     } else {
                         env.PR_URL = "${env.REPO_URL}/tree/${env.BRANCH_NAME}"
                     }
 
+                    // Use actual branch name not PR-25 for checkout
+                    env.ACTUAL_BRANCH = env.CHANGE_BRANCH ?: env.BRANCH_NAME
+
                     echo "=============================================="
-                    echo "COMMITTED_BY : ${env.COMMITTED_BY}"
-                    echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
-                    echo "COMMIT_MSG   : ${env.COMMIT_MSG}"
-                    echo "PR_NUMBER    : ${env.PR_NUMBER}"
-                    echo "COMMIT_HASH  : ${env.COMMIT_HASH}"
-                    echo "PR_URL       : ${env.PR_URL}"
+                    echo "COMMITTED_BY  : ${env.COMMITTED_BY}"
+                    echo "SOURCE_BRANCH : ${env.SOURCE_BRANCH}"
+                    echo "ACTUAL_BRANCH : ${env.ACTUAL_BRANCH}"
+                    echo "COMMIT_MSG    : ${env.COMMIT_MSG}"
+                    echo "PR_NUMBER     : ${env.PR_NUMBER}"
+                    echo "COMMIT_HASH   : ${env.COMMIT_HASH}"
+                    echo "PR_URL        : ${env.PR_URL}"
                     echo "=============================================="
                 }
             }
@@ -121,8 +125,8 @@ pipeline {
                             cd ${QA_PROJECT_DIR}
                             git stash || true
                             git fetch --all
-                            git checkout ${env.BRANCH_NAME}
-                            git pull origin ${env.BRANCH_NAME}
+                            git checkout ${env.ACTUAL_BRANCH}
+                            git pull origin ${env.ACTUAL_BRANCH}
                         '
                     """
                 }
