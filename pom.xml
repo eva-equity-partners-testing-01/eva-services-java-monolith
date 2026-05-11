@@ -16,6 +16,10 @@
 
 	<properties>
 		<java.version>17</java.version>
+		<spotless.version>2.43.0</spotless.version>
+		<google-java-format.version>1.19.2</google-java-format.version>
+		<checkstyle.version>3.3.1</checkstyle.version>
+		<pmd.version>3.21.2</pmd.version>
 	</properties>
 
 	<dependencies>
@@ -23,7 +27,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -34,6 +38,7 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -49,11 +54,97 @@
 
 	<build>
 		<plugins>
+
+			<!-- Spring Boot Maven Plugin -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<!-- ─── Spotless: Google Java Format + import order + unused imports ─── -->
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>${spotless.version}</version>
+				<configuration>
+					<java>
+						<!-- Replaces: black (formatter) + isort (import sorter) -->
+						<googleJavaFormat>
+							<version>${google-java-format.version}</version>
+							<style>AOSP</style> <!-- 4-space indent; change to GOOGLE for 2-space -->
+						</googleJavaFormat>
+						<importOrder>
+							<!-- Group order: java, javax, org, com, others -->
+							<order>java,javax,org,com,</order>
+						</importOrder>
+						<removeUnusedImports/>
+						<trimTrailingWhitespace/>
+						<endWithNewline/>
+					</java>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<!-- 'check' fails build on violations; use 'apply' to auto-fix -->
+							<goal>check</goal>
+						</goals>
+						<phase>validate</phase>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- ─── Checkstyle: style rules (replaces flake8 style checks) ─── -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>${checkstyle.version}</version>
+				<configuration>
+					<!-- Uses Google's built-in ruleset; matches google-java-format style -->
+					<configLocation>google_checks.xml</configLocation>
+					<failsOnError>true</failsOnError>
+					<consoleOutput>true</consoleOutput>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<excludes>**/generated/**</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>checkstyle-validate</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- ─── PMD: static analysis (replaces flake8 complexity/bug rules) ─── -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>${pmd.version}</version>
+				<configuration>
+					<failOnViolation>true</failOnViolation>
+					<printFailingErrors>true</printFailingErrors>
+					<includeTests>true</includeTests>
+					<excludes>
+						<exclude>**/generated/**</exclude>
+					</excludes>
+					<rulesets>
+						<!-- Replaces: debug-statements hook + flake8 complexity -->
+						<ruleset>/rulesets/java/maven-pmd-plugin-default.xml</ruleset>
+					</rulesets>
+				</configuration>
+				<executions>
+					<execution>
+						<id>pmd-validate</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
-
 </project>
