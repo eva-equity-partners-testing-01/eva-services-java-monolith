@@ -12,7 +12,6 @@ pipeline {
 
         PORT           = '8080'
 
-        // Corrected Repo URL
         REPO_URL       = 'https://github.com/eva-equity-partners-testing-01/eva-services-java-monolith'
 
         TEAMS_URL      = 'https://defaulte3ce5830f7d140c0ab827ce4f99738.f0.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5c488acdd9b94415a86cd66bd3f10c87/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PyZaC5FoW98hJSDKFlCsOavaLkDMeWA8EED2GXQvfo'
