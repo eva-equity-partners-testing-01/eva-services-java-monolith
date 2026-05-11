@@ -7,7 +7,7 @@ if [[ ! -f ".env" ]]; then
 fi
 
 set -a
-source ./.env
+source ./.env 
 set +a
 
 ./mvnw clean package -DskipTests
