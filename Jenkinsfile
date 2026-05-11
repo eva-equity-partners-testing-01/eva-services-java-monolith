@@ -66,7 +66,7 @@ pipeline {
             when {
                 allOf {
                     not { changeRequest() }
-                    branch 'qa'
+                    branch 'dev'
                 }
             }
 
@@ -167,7 +167,7 @@ pipeline {
 
             script {
 
-                if (env.BRANCH_NAME == 'qa' && !env.CHANGE_ID) {
+                if (env.BRANCH_NAME == 'dev' && !env.CHANGE_ID) {
 
                     sh """
                         curl -s -X POST "${TEAMS_URL}" \\
@@ -193,7 +193,7 @@ pipeline {
 
             script {
 
-                if (env.BRANCH_NAME == 'qa' && !env.CHANGE_ID) {
+                if (env.BRANCH_NAME == 'dev' && !env.CHANGE_ID) {
 
                     sh """
                         curl -s -X POST "${TEAMS_URL}" \\
