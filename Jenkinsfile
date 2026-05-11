@@ -47,15 +47,13 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    // Extract PR number from last 20 commits
+                    // Only check latest commit for PR number
                     env.PR_NUMBER = sh(
-                        script: '''
-                            git log --pretty=format:"%s" -20 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""
-                        ''',
+                        script: 'git log -1 --pretty=format:"%s" | grep -oP "Merge pull request #\\K\\d+" || echo ""',
                         returnStdout: true
                     ).trim()
 
-                    // Get commit hash as fallback
+                    // Get commit hash as fallback for direct pushes
                     env.COMMIT_HASH = sh(
                         script: 'git log -1 --pretty=format:"%H"',
                         returnStdout: true
@@ -63,7 +61,7 @@ pipeline {
 
                     // Build correct PR URL:
                     // 1. Use CHANGE_URL if available (Jenkins PR build)
-                    // 2. Use /pull/{number} if PR number found in git log
+                    // 2. Use /pull/{number} if PR number found in latest commit
                     // 3. Fallback to /commit/{hash} for direct pushes
                     def repoBase = env.REPO_URL.replace('.git', '')
                     env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${repoBase}/pull/${env.PR_NUMBER}" : "${repoBase}/commit/${env.COMMIT_HASH}")
