@@ -19,3 +19,4 @@ if [[ -z "${JAR_FILE:-}" ]]; then
 fi
 
 java -jar "$JAR_FILE"
+ 
