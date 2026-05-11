@@ -12,7 +12,6 @@ pipeline {
 
         PORT           = '8080'
 
-        // Corrected Repo URL
         REPO_URL       = 'https://github.com/eva-equity-partners-testing-01/eva-services-java-monolith'
 
         TEAMS_URL      = 'https://defaulte3ce5830f7d140c0ab827ce4f99738.f0.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5c488acdd9b94415a86cd66bd3f10c87/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PyZaC5FoW98hJSDKFlCsOavaLkDMeWA8EED2GXQvfo'
@@ -48,30 +47,23 @@ pipeline {
                         env.JOB_NAME.tokenize('/')[1] :
                         env.JOB_NAME
 
-                    // Only check latest commit for PR number
+                    // Check last 5 commits for nearest PR number
                     env.PR_NUMBER = sh(
-                        script: 'git log -1 --pretty=format:"%s" | grep -oP "Merge pull request #\\K\\d+" || echo ""',
-                        returnStdout: true
-                    ).trim()
-
-                    // Get commit hash as fallback for direct pushes
-                    env.COMMIT_HASH = sh(
-                        script: 'git log -1 --pretty=format:"%H"',
+                        script: 'git log --pretty=format:"%s" -5 | grep -oP "Merge pull request #\\K\\d+" | head -1 || echo ""',
                         returnStdout: true
                     ).trim()
 
                     // Build correct PR URL:
                     // 1. Use CHANGE_URL if available (Jenkins PR build)
-                    // 2. Use /pull/{number} if PR number found in latest commit
-                    // 3. Fallback to /commit/{hash} for direct pushes
-                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${env.REPO_URL}/pull/${env.PR_NUMBER}" : "${env.REPO_URL}/commit/${env.COMMIT_HASH}")
+                    // 2. Use /pull/{number} if PR number found in last 5 commits
+                    // 3. Fallback to /tree/{branch} if no PR found at all
+                    env.PR_URL = env.CHANGE_URL ?: (env.PR_NUMBER ? "${env.REPO_URL}/pull/${env.PR_NUMBER}" : "${env.REPO_URL}/tree/${env.BRANCH_NAME}")
 
                     echo "=============================================="
                     echo "COMMITTED_BY : ${env.COMMITTED_BY}"
                     echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
                     echo "COMMIT_MSG   : ${env.COMMIT_MSG}"
                     echo "PR_NUMBER    : ${env.PR_NUMBER}"
-                    echo "COMMIT_HASH  : ${env.COMMIT_HASH}"
                     echo "PR_URL       : ${env.PR_URL}"
                     echo "=============================================="
                 }
