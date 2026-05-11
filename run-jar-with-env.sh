@@ -15,7 +15,7 @@ set +a
 JAR_FILE=$(ls target/*.jar | grep -v 'original' | head -n 1)
 if [[ -z "${JAR_FILE:-}" ]]; then
   echo "No runnable jar found in target/"
-  exit 1
+  exit 1 
 fi 
 
 java -jar "$JAR_FILE"
