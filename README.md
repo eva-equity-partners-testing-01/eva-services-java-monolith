@@ -13,7 +13,7 @@ Front-end that works well with this Back-end
 More practice:
 > [Spring Boot Validate Request Body](https://www.bezkoder.com/spring-boot-validate-request-body/)
 
-> [Spring Boot File upload example with Multipart File](https://www.bezkoder.com/spring-boot-file-upload/)
+> [Spring Boot File upload example with Multipart File](https://www.bezkoder.com/spring-boot-file-upload/) 
 
 > [Spring Boot Pagination & Filter example | Spring JPA, Pageable](https://www.bezkoder.com/spring-boot-pagination-filter-jpa-pageable/)
 
